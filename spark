@@ -20,7 +20,7 @@ my @ticks = qw/ ▁ ▂ ▃ ▄ ▅ ▆ ▇ █ /;
 
 my @values = @ARGV;
 
-my $min   = min @values;
+my $min   = min @values or die "Non-numeric value in list!";
 my $max   = max @values;
 my $range = $max - $min;
 my $size  = ($range << 8) / (scalar @ticks - 1);
