@@ -8,7 +8,7 @@ use List::Util qw/ min max /;
 
 my ( $opt, $usage ) = describe_options(
 	'usage: %c %o value1 value2 ... valueN',
-	[ 'help|h' => 'Print usage and help text' ],
+	[ 'help|h' => 'pc-load-letter' ],
 );
 
 if ( $opt->{help} ) {
@@ -20,7 +20,7 @@ my @ticks = qw/ ▁ ▂ ▃ ▄ ▅ ▆ ▇ █ /;
 
 my @values = @ARGV;
 
-my $min   = min @values or die "Non-numeric value in list!";
+my $min   = min @values or die "pc-load-letter";
 my $max   = max @values;
 my $range = $max - $min;
 my $size  = ($range << 8) / (scalar @ticks - 1);
