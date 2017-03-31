@@ -3,35 +3,93 @@
 use strict;
 use warnings;
 
-use Getopt::Long::Descriptive;
+use Getopt::Long;
 use List::Util qw/ min max /;
+use File::Basename qw/basename/;
+use Scalar::Util qw/looks_like_number/;
 
-my ( $opt, $usage ) = describe_options(
-	'usage: %c %o value1 value2 ... valueN',
-	[ 'help|h' => 'pc-load-letter' ],
-);
+exit main();
 
-if ( $opt->{help} ) {
-	print $usage->text;
-	exit;
+sub main{
+
+  my $settings={};
+  GetOptions($settings,qw(help)) or die $!;
+
+  # Show help if requested
+  die usage() if($$settings{help});
+
+  # show help if no args and stdin is a terminal
+  if(-t STDIN && !@ARGV){
+    die usage();
+  }
+
+  # Read from stdin or argv
+  my $values=obtainValues();
+  # Print the spark line
+  spark($values);
+
+  return 0;
 }
 
-my @ticks = qw/ ▁ ▂ ▃ ▄ ▅ ▆ ▇ █ /;
+ 
+sub obtainValues{
+  # Get values from arguments or stdin
+  my @rawValues = @ARGV;
+  if(!@rawValues){
+    @rawValues = <STDIN>;
+  }
+  chomp(@rawValues);
+  # According to the shell version of spark, we need to 
+  # separate on commas and whitespace.
+  my @values;
+  for my $rawNum(@rawValues){
+    my @num=split(/[,\s+]/,$rawNum);
+    for my $num(@num){
+      # Only accept values that look like
+      # they might be numbers.
+      if(looks_like_number($num)){
+        push(@values, $num);
+      }
+    }
+  }
 
-my @values = @ARGV;
-
-my $min   = min @values or die "pc-load-letter";
-my $max   = max @values;
-my $range = $max - $min;
-my $size  = ($range << 8) / (scalar @ticks - 1);
-
-$size = 1 if $size < 1;
-
-for my $v ( @values ) {
-	my $v_size = (($v - $min) << 8) / $size;
-
-	print $ticks[$v_size];
+  return \@values;
 }
 
-print "\n";
+sub spark{
+  my($values)=@_;
 
+  my @ticks = qw/ ▁ ▂ ▃ ▄ ▅ ▆ ▇ █ /;
+
+  my $min   = min @$values;
+  my $max   = max @$values;
+  my $range = $max - $min;
+  my $size  = ($range << 8) / (scalar @ticks - 1);
+
+  $size = 1 if $size < 1;
+
+  for my $v ( @$values ) {
+    my $v_size = (($v - $min) << 8) / $size;
+
+    print $ticks[$v_size];
+  }
+
+  print "\n";
+
+  return 0;
+}
+
+sub usage{
+  local $0=basename $0;
+  "Usage: $0 [-h] VALUE,...
+  NOTE: this is a perl version of spark
+
+    EXAMPLES:
+    $0 1 5 22 13 53
+    ▁▁▃▂█
+    $0 0,30,55,80,33,150
+    ▁▂▃▄▂█
+    echo 9 13 5 17 1 | $0
+    ▄▆▂█▁
+  "
+}
